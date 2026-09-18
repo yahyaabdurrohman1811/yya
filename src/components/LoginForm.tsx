@@ -1,85 +1,50 @@
 import { useState } from 'react';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  AuthError
-} from 'firebase/auth';
-import { auth } from '../firebase';
-import { Ship, Anchor, ShieldCheck, Lock, Mail, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { loginUser } from '../services/authService';
+import { Ship, Anchor, ShieldCheck, Lock, User as UserIcon, ArrowRight, Eye, EyeOff, Loader2, Sparkles } from 'lucide-react';
 
 interface LoginFormProps {
   onNotify: (type: 'success' | 'error' | 'info', title: string, message: string) => void;
 }
 
 export default function LoginForm({ onNotify }: LoginFormProps) {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = async (targetEmail = email, targetPassword = password, roleLabel?: string) => {
+  const handleLogin = async (targetIdentifier = identifier, targetPassword = password, roleLabel?: string) => {
     setErrorMessage('');
     
-    // Strict client validation
-    const trimmedEmail = targetEmail.trim();
-    if (!trimmedEmail) {
-      setErrorMessage('Silakan masukkan alamat email atau username admin.');
+    const trimmedIdentifier = targetIdentifier.trim();
+    if (!trimmedIdentifier) {
+      setErrorMessage('Silakan masukkan username atau email admin.');
       return;
     }
-    if (!trimmedEmail.includes('@') || !trimmedEmail.includes('.')) {
-      setErrorMessage('Format email tidak valid. Contoh: admin@samudera-bahari.co.id');
-      return;
-    }
-    if (!targetPassword || targetPassword.length < 6) {
-      setErrorMessage('Kata sandi harus minimal 6 karakter.');
+
+    if (!targetPassword) {
+      setErrorMessage('Silakan masukkan kata sandi.');
       return;
     }
 
     setLoading(true);
     try {
-      // Attempt login
-      await signInWithEmailAndPassword(auth, trimmedEmail, targetPassword);
+      const user = await loginUser(trimmedIdentifier, targetPassword, roleLabel);
       onNotify(
         'success',
-        'Autentikasi Berhasil',
-        `Selamat datang kembali di Portal Operasional Pelayaran${roleLabel ? ` (${roleLabel})` : ''}.`
+        'Login Berhasil',
+        `Selamat datang di Portal Operasional YY Samudra Logs, ${user.displayName}.`
       );
-    } catch (err) {
-      const error = err as AuthError;
-      // If demo account doesn't exist yet in fresh Firebase Auth, create it automatically
-      if (
-        error.code === 'auth/user-not-found' ||
-        error.code === 'auth/invalid-credential' ||
-        error.code === 'auth/wrong-password'
-      ) {
-        try {
-          await createUserWithEmailAndPassword(auth, trimmedEmail, targetPassword);
-          onNotify(
-            'success',
-            'Akun Didaftarkan & Masuk',
-            `Akun terdaftar ke Firebase Auth. Selamat datang di Portal Manajemen Pelayaran.`
-          );
-          return;
-        } catch (createErr) {
-          const cError = createErr as AuthError;
-          console.error("Auth sign-in/create error:", cError);
-          setErrorMessage(cError.message || 'Kredensial login tidak cocok.');
-        }
-      } else {
-        setErrorMessage(
-          error.code === 'auth/too-many-requests'
-            ? 'Terlalu banyak percobaan gagal. Silakan coba lagi sebentar lagi.'
-            : error.message || 'Terjadi kesalahan saat masuk.'
-        );
-      }
+    } catch (err: any) {
+      console.error("Login attempt error:", err);
+      setErrorMessage(err?.message || 'Terjadi kesalahan saat masuk. Periksa kembali kredensial Anda.');
     } finally {
       setLoading(false);
     }
   };
 
   const executeQuickDemo = async (demoEmail: string, demoPass: string, roleName: string) => {
-    setEmail(demoEmail);
+    setIdentifier(demoEmail);
     setPassword(demoPass);
     await handleLogin(demoEmail, demoPass, roleName);
   };
@@ -132,19 +97,19 @@ export default function LoginForm({ onNotify }: LoginFormProps) {
             className="space-y-4"
           >
             <div>
-              <label htmlFor="login-email-input" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
-                Email / Username Admin
+              <label htmlFor="login-identifier-input" className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                Username / Email Admin
               </label>
               <div className="relative rounded-lg shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Mail className="h-4 w-4" />
+                  <UserIcon className="h-4 w-4" />
                 </div>
                 <input
-                  id="login-email-input"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@yysamudralogs.co.id"
+                  id="login-identifier-input"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="admin atau admin@yysamudralogs.co.id"
                   required
                   className="block w-full pl-10 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white focus:border-transparent transition-all"
                 />
@@ -171,7 +136,7 @@ export default function LoginForm({ onNotify }: LoginFormProps) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -187,7 +152,7 @@ export default function LoginForm({ onNotify }: LoginFormProps) {
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Memproses Masuk...</span>
+                  <span>Memverifikasi Akun...</span>
                 </>
               ) : (
                 <>
@@ -202,10 +167,44 @@ export default function LoginForm({ onNotify }: LoginFormProps) {
           <div className="mt-7 pt-6 border-t border-slate-200">
             <div className="flex items-center gap-2 mb-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <ShieldCheck className="w-4 h-4 text-blue-600" />
-              <span>Quick Login Demo (1-Klik)</span>
+              <span>Quick Demo Login (1-Klik Langsung Masuk)</span>
             </div>
 
             <div className="space-y-2">
+              {/* Quick Login 1: Super Admin */}
+              <button
+                id="quick-login-super-admin"
+                type="button"
+                disabled={loading}
+                onClick={() =>
+                  executeQuickDemo(
+                    'admin@yysamudralogs.co.id',
+                    'admin123',
+                    'Super Administrator'
+                  )
+                }
+                className="w-full text-left p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-blue-50/60 hover:border-blue-300 transition-all flex items-center justify-between group cursor-pointer"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                    SA
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-slate-800 group-hover:text-blue-700 flex items-center gap-1.5">
+                      <span>Super Admin YY Logs</span>
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      admin@yysamudralogs.co.id (Pass: admin123)
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs font-medium text-blue-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 group-hover:border-blue-300 shadow-xs">
+                  Masuk Cepat
+                </span>
+              </button>
+
+              {/* Quick Login 2: Direktur Operasi */}
               <button
                 id="quick-login-director"
                 type="button"
@@ -233,10 +232,11 @@ export default function LoginForm({ onNotify }: LoginFormProps) {
                   </div>
                 </div>
                 <span className="text-xs font-medium text-blue-600 bg-white px-2.5 py-1 rounded-lg border border-slate-200 group-hover:border-blue-300 shadow-xs">
-                  Klik Masuk
+                  Masuk Cepat
                 </span>
               </button>
 
+              {/* Quick Login 3: Kepala Armada */}
               <button
                 id="quick-login-fleet-manager"
                 type="button"
@@ -264,7 +264,7 @@ export default function LoginForm({ onNotify }: LoginFormProps) {
                   </div>
                 </div>
                 <span className="text-xs font-medium text-teal-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200 group-hover:border-teal-300 shadow-xs">
-                  Klik Masuk
+                  Masuk Cepat
                 </span>
               </button>
             </div>

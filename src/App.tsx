@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, testFirebaseConnection } from './firebase';
+import { testFirebaseConnection } from './firebase';
+import { initAuthListener } from './services/authService';
 import LoginForm from './components/LoginForm';
 import { Navbar, ActiveTab } from './components/Navbar';
 import { VesselsModule } from './components/VesselsModule';
@@ -15,11 +15,11 @@ import {
   subscribeCrew, 
   seedInitialMaritimeData 
 } from './services/firestoreService';
-import { Vessel, Voyage, Cargo, CrewMember, FeedbackToast } from './types';
+import { Vessel, Voyage, Cargo, CrewMember, FeedbackToast, AuthUser } from './types';
 import { Ship, Loader2, RefreshCw, Anchor } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('vessels');
 
@@ -48,9 +48,9 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Listen to Firebase Auth state (no localStorage!)
+  // Listen to Firebase and Firestore auth state (no localStorage!)
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+    const unsubscribeAuth = initAuthListener((user) => {
       setCurrentUser(user);
       setAuthLoading(false);
     });

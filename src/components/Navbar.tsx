@@ -1,6 +1,6 @@
 import React from 'react';
-import { signOut, User } from 'firebase/auth';
-import { auth } from '../firebase';
+import { logoutUser } from '../services/authService';
+import { AuthUser } from '../types';
 import { 
   Ship, 
   Compass, 
@@ -15,7 +15,7 @@ import {
 export type ActiveTab = 'vessels' | 'voyages' | 'cargo' | 'crew';
 
 interface NavbarProps {
-  user: User;
+  user: AuthUser;
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   vesselsCount: number;
@@ -41,7 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const handleSignOut = async () => {
     try {
-      await signOut(auth);
+      await logoutUser();
       onNotify('info', 'Sesi Berakhir', 'Anda telah berhasil keluar dari sistem.');
     } catch (err) {
       console.error("Sign out error:", err);
@@ -130,11 +130,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* User Profile Card */}
             <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
               <div className="text-right hidden sm:block">
-                <div className="text-xs font-semibold text-slate-800 truncate max-w-[160px]">
-                  {user.email || 'Admin Operasional'}
+                <div className="text-xs font-semibold text-slate-800 truncate max-w-[170px]">
+                  {user.displayName || user.email}
                 </div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-wider font-medium">
-                  Administrator
+                <div className="text-[10px] text-blue-700 font-semibold tracking-wide">
+                  {user.role}
                 </div>
               </div>
               

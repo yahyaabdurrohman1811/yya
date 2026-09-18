@@ -88,3 +88,12 @@ export interface FeedbackToast {
   message: string;
   timestamp: number;
 }
+
+export interface AuthUser {
+  uid: string;
+  email: string;
+  displayName: string;
+  role: string;
+  isAnonymous?: boolean;
+}
+
