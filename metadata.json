@@ -1,0 +1,6 @@
+{
+  "name": "Manajemen Perusahaan Pelayaran",
+  "description": "Sistem manajemen operasional armada kapal, jadwal pelayaran, kargo, dan kru untuk YY Samudra Logs dengan Firebase Firestore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

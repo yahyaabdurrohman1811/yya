@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "vessel": {
+      "title": "Armada Kapal (Vessel)",
+      "description": "Informasi armada kapal operasional perusahaan pelayaran",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nama kapal" },
+        "imoNumber": { "type": "string", "description": "Nomor IMO unik kapal" },
+        "type": { "type": "string", "description": "Tipe kapal (Container, Tanker, Bulk Carrier, Ro-Ro, dll)" },
+        "capacityDwt": { "type": "number", "description": "Kapasitas muatan dalam Deadweight Tonnage (DWT)" },
+        "yearBuilt": { "type": "number", "description": "Tahun peluncuran/pembuatan kapal" },
+        "flag": { "type": "string", "description": "Bendera negara registrasi kapal" },
+        "status": { "type": "string", "description": "Status operasional: underway, docked, maintenance, standby" },
+        "homePort": { "type": "string", "description": "Pelabuhan pangkalan induk" },
+        "createdAt": { "type": "string", "description": "Timestamp pembuatan data" },
+        "updatedAt": { "type": "string", "description": "Timestamp pembaharuan data" }
+      },
+      "required": ["name", "imoNumber", "type", "capacityDwt", "status", "homePort"]
+    },
+    "voyage": {
+      "title": "Jadwal Pelayaran (Voyage)",
+      "description": "Jadwal dan rute pelayaran antar pelabuhan",
+      "type": "object",
+      "properties": {
+        "voyageNumber": { "type": "string", "description": "Nomor trayek/voyage" },
+        "vesselId": { "type": "string", "description": "ID kapal yang bertugas" },
+        "vesselName": { "type": "string", "description": "Nama kapal yang bertugas" },
+        "originPort": { "type": "string", "description": "Pelabuhan tolak / keberangkatan" },
+        "destinationPort": { "type": "string", "description": "Pelabuhan sandar / tujuan" },
+        "departureDate": { "type": "string", "description": "Waktu tolak (ETD)" },
+        "arrivalDate": { "type": "string", "description": "Waktu tiba (ETA)" },
+        "status": { "type": "string", "description": "Status perjalanan: scheduled, in_transit, arrived, delayed, completed" },
+        "cargoLoadTon": { "type": "number", "description": "Beban muatan saat ini (Ton)" },
+        "createdAt": { "type": "string", "description": "Timestamp pembuatan" },
+        "updatedAt": { "type": "string", "description": "Timestamp pembaharuan" }
+      },
+      "required": ["voyageNumber", "vesselName", "originPort", "destinationPort", "departureDate", "arrivalDate", "status"]
+    },
+    "cargo": {
+      "title": "Kargo Muatan (Cargo)",
+      "description": "Data manifes dan muatan kargo kapal",
+      "type": "object",
+      "properties": {
+        "blNumber": { "type": "string", "description": "Nomor Bill of Lading (B/L)" },
+        "shipper": { "type": "string", "description": "Perusahaan / pihak pengirim" },
+        "consignee": { "type": "string", "description": "Perusahaan / pihak penerima" },
+        "cargoType": { "type": "string", "description": "Tipe muatan: Dry Container, Liquid Bulk, General Cargo, Vehicles" },
+        "weightTon": { "type": "number", "description": "Berat muatan (Ton)" },
+        "vesselName": { "type": "string", "description": "Nama kapal pembawa" },
+        "voyageNumber": { "type": "string", "description": "Nomor trayek terkait" },
+        "status": { "type": "string", "description": "Status muatan: booked, loaded, in_transit, discharged, released" },
+        "createdAt": { "type": "string", "description": "Timestamp pembuatan" },
+        "updatedAt": { "type": "string", "description": "Timestamp pembaharuan" }
+      },
+      "required": ["blNumber", "shipper", "consignee", "cargoType", "weightTon", "status"]
+    },
+    "crew": {
+      "title": "Awak Kapal (Crew Member)",
+      "description": "Data personil pelaut dan kru kapal",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "description": "Nama lengkap pelaut" },
+        "seamanBookNo": { "type": "string", "description": "Nomor buku pelaut resmi" },
+        "role": { "type": "string", "description": "Jabatan kapal (Captain, Chief Officer, Chief Engineer, dll)" },
+        "vesselName": { "type": "string", "description": "Kapal penugasan" },
+        "certificateValidity": { "type": "string", "description": "Masa berlaku sertifikat kompetensi (CoC)" },
+        "status": { "type": "string", "description": "Status: on_board, on_leave, standby" },
+        "contactPhone": { "type": "string", "description": "Nomor kontak darurat" },
+        "createdAt": { "type": "string", "description": "Timestamp pembuatan" },
+        "updatedAt": { "type": "string", "description": "Timestamp pembaharuan" }
+      },
+      "required": ["fullName", "seamanBookNo", "role", "status"]
+    }
+  },
+  "firestore": {
+    "/vessels/{vesselId}": {
+      "schema": "#/entities/vessel",
+      "description": "Koleksi data armada kapal pelayaran"
+    },
+    "/voyages/{voyageId}": {
+      "schema": "#/entities/voyage",
+      "description": "Koleksi jadwal dan rute pelayaran"
+    },
+    "/cargos/{cargoId}": {
+      "schema": "#/entities/cargo",
+      "description": "Koleksi manifes kargo dan muatan"
+    },
+    "/crews/{crewId}": {
+      "schema": "#/entities/crew",
+      "description": "Koleksi personil kru dan awak kapal"
+    }
+  }
+}
