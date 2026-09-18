@@ -13,6 +13,24 @@ import {
 import { db } from '../firebase';
 import { Vessel, Voyage, Cargo, CrewMember } from '../types';
 
+/**
+ * Deeply cleans an object by removing undefined properties so Firestore never throws
+ * "Function addDoc() called with invalid data. Unsupported field value: undefined"
+ */
+export function cleanFirestoreData<T extends Record<string, any>>(data: T): Record<string, any> {
+  const cleaned: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      if (value !== null && typeof value === 'object' && !Array.isArray(value) && !(value instanceof Date)) {
+        cleaned[key] = cleanFirestoreData(value);
+      } else {
+        cleaned[key] = value;
+      }
+    }
+  }
+  return cleaned;
+}
+
 // ==================== VESSELS CRUD ====================
 export function subscribeVessels(callback: (vessels: Vessel[]) => void, onError?: (err: Error) => void) {
   const q = query(collection(db, 'vessels'), orderBy('createdAt', 'desc'));
@@ -34,20 +52,22 @@ export function subscribeVessels(callback: (vessels: Vessel[]) => void, onError?
 
 export async function createVessel(data: Omit<Vessel, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const now = new Date().toISOString();
-  const docRef = await addDoc(collection(db, 'vessels'), {
+  const payload = cleanFirestoreData({
     ...data,
     createdAt: now,
     updatedAt: now,
   });
+  const docRef = await addDoc(collection(db, 'vessels'), payload);
   return docRef.id;
 }
 
 export async function updateVessel(id: string, data: Partial<Omit<Vessel, 'id' | 'createdAt'>>): Promise<void> {
   const docRef = doc(db, 'vessels', id);
-  await updateDoc(docRef, {
+  const payload = cleanFirestoreData({
     ...data,
     updatedAt: new Date().toISOString(),
   });
+  await updateDoc(docRef, payload);
 }
 
 export async function deleteVessel(id: string): Promise<void> {
@@ -75,20 +95,22 @@ export function subscribeVoyages(callback: (voyages: Voyage[]) => void, onError?
 
 export async function createVoyage(data: Omit<Voyage, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const now = new Date().toISOString();
-  const docRef = await addDoc(collection(db, 'voyages'), {
+  const payload = cleanFirestoreData({
     ...data,
     createdAt: now,
     updatedAt: now,
   });
+  const docRef = await addDoc(collection(db, 'voyages'), payload);
   return docRef.id;
 }
 
 export async function updateVoyage(id: string, data: Partial<Omit<Voyage, 'id' | 'createdAt'>>): Promise<void> {
   const docRef = doc(db, 'voyages', id);
-  await updateDoc(docRef, {
+  const payload = cleanFirestoreData({
     ...data,
     updatedAt: new Date().toISOString(),
   });
+  await updateDoc(docRef, payload);
 }
 
 export async function deleteVoyage(id: string): Promise<void> {
@@ -116,20 +138,22 @@ export function subscribeCargo(callback: (cargos: Cargo[]) => void, onError?: (e
 
 export async function createCargo(data: Omit<Cargo, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const now = new Date().toISOString();
-  const docRef = await addDoc(collection(db, 'cargos'), {
+  const payload = cleanFirestoreData({
     ...data,
     createdAt: now,
     updatedAt: now,
   });
+  const docRef = await addDoc(collection(db, 'cargos'), payload);
   return docRef.id;
 }
 
 export async function updateCargo(id: string, data: Partial<Omit<Cargo, 'id' | 'createdAt'>>): Promise<void> {
   const docRef = doc(db, 'cargos', id);
-  await updateDoc(docRef, {
+  const payload = cleanFirestoreData({
     ...data,
     updatedAt: new Date().toISOString(),
   });
+  await updateDoc(docRef, payload);
 }
 
 export async function deleteCargo(id: string): Promise<void> {
@@ -157,20 +181,22 @@ export function subscribeCrew(callback: (crew: CrewMember[]) => void, onError?: 
 
 export async function createCrew(data: Omit<CrewMember, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
   const now = new Date().toISOString();
-  const docRef = await addDoc(collection(db, 'crews'), {
+  const payload = cleanFirestoreData({
     ...data,
     createdAt: now,
     updatedAt: now,
   });
+  const docRef = await addDoc(collection(db, 'crews'), payload);
   return docRef.id;
 }
 
 export async function updateCrew(id: string, data: Partial<Omit<CrewMember, 'id' | 'createdAt'>>): Promise<void> {
   const docRef = doc(db, 'crews', id);
-  await updateDoc(docRef, {
+  const payload = cleanFirestoreData({
     ...data,
     updatedAt: new Date().toISOString(),
   });
+  await updateDoc(docRef, payload);
 }
 
 export async function deleteCrew(id: string): Promise<void> {
@@ -264,7 +290,7 @@ export async function seedInitialMaritimeData(): Promise<void> {
 
   for (const v of initialVessels) {
     const ref = doc(collection(db, 'vessels'));
-    batch.set(ref, v);
+    batch.set(ref, cleanFirestoreData(v));
   }
 
   // 2. Initial Voyages
@@ -318,7 +344,7 @@ export async function seedInitialMaritimeData(): Promise<void> {
 
   for (const voy of initialVoyages) {
     const ref = doc(collection(db, 'voyages'));
-    batch.set(ref, voy);
+    batch.set(ref, cleanFirestoreData(voy));
   }
 
   // 3. Initial Cargo
@@ -367,7 +393,7 @@ export async function seedInitialMaritimeData(): Promise<void> {
 
   for (const c of initialCargo) {
     const ref = doc(collection(db, 'cargos'));
-    batch.set(ref, c);
+    batch.set(ref, cleanFirestoreData(c));
   }
 
   // 4. Initial Crew
@@ -409,7 +435,7 @@ export async function seedInitialMaritimeData(): Promise<void> {
       fullName: 'Agus Setiawan',
       seamanBookNo: 'ID-091283-B',
       role: 'Bosun / Serang',
-      vesselName: 'KM Samudera Perkasa IX',
+      vesselName: 'KM YY Samudra Perkasa IX',
       certificateValidity: '2027-06-30',
       status: 'on_board',
       contactPhone: '+62 821-4455-6677',
@@ -420,7 +446,7 @@ export async function seedInitialMaritimeData(): Promise<void> {
 
   for (const cr of initialCrew) {
     const ref = doc(collection(db, 'crews'));
-    batch.set(ref, cr);
+    batch.set(ref, cleanFirestoreData(cr));
   }
 
   await batch.commit();
